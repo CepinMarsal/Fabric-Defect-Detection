@@ -1,0 +1,12 @@
+path: ../dataset/tilda defect balanced
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 4
+
+names:
+  0: hole
+  1: objects
+  2: oil spot
+  3: thread error

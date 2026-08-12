@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Dataset images and labels
+dataset/*/train/images/
+dataset/*/train/labels/
+dataset/*/valid/images/
+dataset/*/valid/labels/
+dataset/*/test/images/
+dataset/*/test/labels/
+
+# Dataset archives
+dataset/**/*.zip
+dataset/**/*.rar
+dataset/**/*.7z
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS files
+Thumbs.db
+.DS_Store
