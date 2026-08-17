@@ -1,8 +1,8 @@
 path: D:/Kuliah/Comvis/Fabric Defect Detection/dataset/balanced dataset
 
 train: train/images
-val: valid/images
-test: test/images
+val: testing/images
+test: evaluation/images
 
 nc: 4
 
