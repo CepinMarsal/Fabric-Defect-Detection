@@ -22,6 +22,11 @@ dataset/*/valid/images/
 dataset/*/valid/labels/
 dataset/*/test/images/
 dataset/*/test/labels/
+dataset2/
+balance_dataset.py/
+results/
+notebooks/
+
 
 # Dataset archives
 dataset/**/*.zip
