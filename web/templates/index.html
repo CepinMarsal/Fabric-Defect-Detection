@@ -629,7 +629,10 @@
 
             <div class="camera-container" id="cameraContainer">
                 <div class="recording-dot" id="recordingDot"></div>
-                <video id="cameraFeed" autoplay playsinline></video>
+                <!-- Video tetap ada di background agar stream aktif -->
+                <video id="cameraFeed" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+                <img id="resultFeed" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2;" alt="Processed Output" />
+                <canvas id="captureCanvas" style="display: none;"></canvas>
                 <div class="camera-placeholder" id="cameraPlaceholder">
                     <div class="placeholder-icon"></div>
                     <h3>Kamera belum aktif</h3>
