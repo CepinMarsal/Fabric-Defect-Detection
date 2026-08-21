@@ -16,11 +16,15 @@
     const cameraPlaceholder = document.getElementById("cameraPlaceholder");
     const cameraStatus = document.getElementById("cameraStatus");
     const recordingDot = document.getElementById("recordingDot");
+    const resultFeed = document.getElementById("resultFeed");
+    const captureCanvas = document.getElementById("captureCanvas");
 
     // ============================
     // State
     // ============================
     let currentStream = null;
+    let isProcessing = false;
+    let processingInterval = null;
 
     // ============================
     // CAMERA — Enumerate Devices
@@ -141,17 +145,31 @@
 
             cameraFeed.srcObject = stream;
             cameraFeed.style.display = "block";
+            
+            // Tunggu sampai video bermain untuk mendapatkan ukuran frame
+            cameraFeed.onplaying = () => {
+                captureCanvas.width = cameraFeed.videoWidth;
+                captureCanvas.height = cameraFeed.videoHeight;
+                
+                // Mulai proses pengiriman frame hanya jika belum berjalan
+                if (!isProcessing) {
+                    isProcessing = true;
+                    processFrame();
+                }
+            };
+            
+            // Panggil play secara eksplisit
+            cameraFeed.play().catch(e => console.error("Play error:", e));
+
             cameraPlaceholder.style.display = "none";
+            // resultFeed disembunyikan dulu sampai frame pertama berhasil diproses
+            resultFeed.style.display = "none";
             recordingDot.style.display = "block";
 
             btnStart.disabled = true;
             btnStop.disabled = false;
 
-            setStatus("Kamera aktif", "active");
-
-            // --- Tambahkan Computer Vision processing di sini ---
-            // Contoh: kirim frame ke backend untuk diproses
-            // processFrame(cameraFeed);
+            setStatus("Kamera aktif (Memproses Real-time...)", "active");
 
         } catch (err) {
             if (err.name === "NotAllowedError") {
@@ -171,6 +189,8 @@
      * Menghentikan kamera dan membersihkan stream.
      */
     function stopCamera() {
+        isProcessing = false; // Hentikan loop pemrosesan
+
         if (currentStream) {
             currentStream.getTracks().forEach(function (track) {
                 track.stop();
@@ -180,6 +200,8 @@
 
         cameraFeed.srcObject = null;
         cameraFeed.style.display = "none";
+        resultFeed.style.display = "none";
+        resultFeed.src = ""; // Bersihkan gambar terakhir
         cameraPlaceholder.style.display = "flex";
         recordingDot.style.display = "none";
 
@@ -199,6 +221,59 @@
         cameraStatus.className = "camera-status";
         if (type) {
             cameraStatus.classList.add(type);
+        }
+    }
+
+    /**
+     * Memproses frame secara berulang dengan mengirimkannya ke backend Flask.
+     */
+    async function processFrame() {
+        if (!isProcessing) return;
+
+        try {
+            if (captureCanvas.width === 0 || captureCanvas.height === 0) {
+                // Tunggu sebentar sampai ukuran tersedia
+                if (isProcessing) setTimeout(() => requestAnimationFrame(processFrame), 100);
+                return;
+            }
+
+            // Gambar frame saat ini ke canvas
+            const ctx = captureCanvas.getContext('2d');
+            ctx.drawImage(cameraFeed, 0, 0, captureCanvas.width, captureCanvas.height);
+            
+            // Ambil data base64
+            const imageData = captureCanvas.toDataURL('image/jpeg', 0.8);
+
+            // Kirim ke backend
+            const response = await fetch('/api/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: imageData })
+            });
+
+            const data = await response.json();
+            
+            if (data.success && isProcessing) {
+                // Tampilkan hasil pemrosesan dan sembunyikan video asli di belakangnya jika perlu
+                resultFeed.src = data.image;
+                if (resultFeed.style.display === "none") {
+                    resultFeed.style.display = "block";
+                }
+            } else if (data.error) {
+                console.error("Error dari backend:", data.error);
+            }
+        } catch (error) {
+            console.error("Gagal memproses frame:", error);
+        }
+
+        // Jalankan rekursif untuk frame berikutnya jika masih aktif
+        if (isProcessing) {
+            // Gunakan requestAnimationFrame atau timeout (misal tiap 100ms untuk meringankan beban)
+            setTimeout(() => {
+                requestAnimationFrame(processFrame);
+            }, 100); 
         }
     }
 
